@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useUnit } from "effector-react";
 import styled from "styled-components";
-import { BEACONS, CAMP, CRYSTALS, energyLeft } from "@/lib/expedition";
+import { BEACONS, CAMP, CRYSTALS, DAWN_DRIVE_UPGRADE, energyLeft, hasUpgrade } from "@/lib/expedition";
 import { $expedition, $expeditionNotice, $saveAvailable } from "@/stores/expedition/expedition";
 import { TownState } from "../lib/state";
 import { resetControls } from "../lib/controls";
@@ -23,20 +23,25 @@ const Panel = styled.section`
   progress { width: 100%; height: 6px; accent-color: #8de2bd; }
   @media(max-width: 650px) { top: 10px; left: 10px; width: 230px; padding: 12px; h1 { font-size: 18px; } }
 `;
-const MapPanel = styled.section`
-  position: absolute; right: 22px; top: 22px; width: 310px; padding: 20px;
-  border: 1px solid #ffffff26; border-radius: 16px; background: rgb(16 32 39 / var(--hud-opacity, .55)); backdrop-filter: blur(6px); pointer-events: auto;
-  h2 { font-size: 22px; font-weight: 500; margin: 6px 0 18px; } small { color: #b4d0ca; font-size: 10px; letter-spacing: .2em; }
-  p { font-size: 12px; color: #cedbd6; }
-  nav { display: grid; gap: 5px; }
-  nav button { display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; font-size: 12px; padding: 10px 12px; background: transparent; border-color: transparent; border-bottom-color: #ffffff16; border-radius: 6px; } nav button[aria-pressed="true"] { background: #a9e5cf18; border-color: #bce8d946; } nav em { font-style: normal; font-size: 10px; color: #aed4c4; }
-  @media(max-width: 750px) { top: 10px; right: 10px; width: min(300px, calc(100vw - 52px)); max-height: calc(100vh - 100px); overflow: auto; }
+const MiniMap = styled.aside`
+  position: absolute; right: 22px; top: 22px; width: 176px; aspect-ratio: 1; padding: 8px;
+  border: 1px solid #ffffff26; border-radius: 50%; overflow: hidden;
+  background: rgb(16 32 39 / var(--hud-opacity, .55)); backdrop-filter: blur(6px);
+  box-shadow: 0 12px 40px #10232924;
+  svg { display: block; width: 100%; height: 100%; border-radius: 50%; background: rgb(52 97 94 / calc(var(--hud-opacity, .55) * .5)); }
+  @media(max-width: 650px) { top: 10px; right: 10px; width: 118px; padding: 6px; }
 `;
 const Footer = styled.div`
   position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
   max-width: calc(100vw - 30px); width: max-content; border-radius: 12px; padding: 12px 18px;
   background: rgb(16 32 39 / var(--hud-opacity, .55)); backdrop-filter: blur(6px); text-align: center; font-size: 12px; line-height: 1.8;
   strong { color: #ffce84; } span { color: #cedbd6; }
+`;
+const Speed = styled.div`
+  position: absolute; right: 24px; bottom: 22px; min-width: 104px; text-align: right;
+  color: #f7ead0; font-size: 25px; font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 12px #102329aa;
+  small { display: block; color: #c2d8d0; font-size: 9px; letter-spacing: .18em; }
 `;
 
 const PauseLayer = styled.div`
@@ -63,15 +68,14 @@ const readTransparency = () => {
 };
 export const HubHud = ({ state }: { state: TownState }) => {
   const [save, notice, canSave] = useUnit([$expedition, $expeditionNotice, $saveAvailable]);
-  const [mapOpen, setMapOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [transparency, setTransparency] = useState(readTransparency);
   const menuRef = useRef<HTMLElement>(null);
-  const [targetId, setTargetId] = useState(BEACONS[0].id);
-  const marker = useRef<SVGCircleElement>(null);
+  const mapContent = useRef<SVGGElement>(null);
   const navigation = useRef<HTMLParagraphElement>(null);
   const prompt = useRef<HTMLDivElement>(null);
-  const target = BEACONS.find((beacon) => beacon.id === targetId) ?? BEACONS[0];
+  const speed = useRef<HTMLSpanElement>(null);
+  const target = BEACONS.find((beacon) => !save.restored.includes(beacon.id)) ?? BEACONS[0];
   useLayoutEffect(() => {
     state.paused = menuOpen;
     resetControls();
@@ -89,7 +93,6 @@ export const HubHud = ({ state }: { state: TownState }) => {
     const key = (event: KeyboardEvent) => {
       if (event.repeat) return;
       if (event.code === "Escape") { event.preventDefault(); setMenuOpen((open) => !open); }
-      if (event.code === "KeyM" && !state.paused) { event.preventDefault(); setMapOpen((open) => !open); }
       if (event.code === "Tab" && state.paused) {
         const elements = menuRef.current?.querySelectorAll<HTMLElement>("button, input");
         if (!elements?.length) return;
@@ -105,8 +108,9 @@ export const HubHud = ({ state }: { state: TownState }) => {
     let raf = 0;
     const tick = () => {
       const { x, z } = state.player;
-      marker.current?.setAttribute("cx", String(Math.max(-105, Math.min(105, x))));
-      marker.current?.setAttribute("cy", String(Math.max(-105, Math.min(105, z))));
+      if (speed.current) speed.current.textContent = String(Math.round(Math.abs(state.player.speed) * 3.6)).padStart(2, "0");
+      const mapAngle = (state.cameraFacing - Math.PI) * 180 / Math.PI;
+      mapContent.current?.setAttribute("transform", `rotate(${mapAngle}) translate(${-x} ${-z})`);
       const allLit = save.restored.length === BEACONS.length;
       const destination = allLit ? CAMP : target;
       const dx = destination.x - x, dz = destination.z - z;
@@ -117,7 +121,7 @@ export const HubHud = ({ state }: { state: TownState }) => {
       raf = requestAnimationFrame(tick);
     };
     tick(); return () => cancelAnimationFrame(raf);
-  }, [state, target, save, mapOpen]);
+  }, [state, target, save]);
   return <Root data-hud>
     <Panel aria-label="Журнал экспедиции" style={{ visibility: menuOpen ? "hidden" : "visible" }}>
       <small>ЭКСПЕДИЦИЯ 01 / ОТКРЫТЫЙ МИР</small>
@@ -125,35 +129,36 @@ export const HubHud = ({ state }: { state: TownState }) => {
       <div>◈ {energyLeft(save)} энергии <span> · </span> {save.restored.length}/5 маяков</div>
       <progress aria-label="Восстановленные маяки" value={save.restored.length} max={5} />
       <p>{save.completed ? "Долина спасена. Продолжайте исследовать мир." : "Собирайте осколки, зажгите пять маяков и вернитесь к огню лагеря."}</p>
+      {hasUpgrade(save, DAWN_DRIVE_UPGRADE) && <p><b>Форсированный привод:</b> тяга +18%, скорость +15%</p>}
       <p ref={navigation} />
-      <button onClick={() => setMapOpen((open) => !open)} aria-expanded={mapOpen}>M · {mapOpen ? "Закрыть карту" : "Карта и цели"}</button>
-      <button style={{ marginLeft: 6 }} onClick={() => setMenuOpen(true)}>Esc</button>
+      <button onClick={() => setMenuOpen(true)}>Esc</button>
       <p role="status" aria-live="polite">{notice}</p>
       <small>{canSave ? "ПРОГРЕСС СОХРАНЯЕТСЯ" : "СОХРАНЕНИЕ НЕДОСТУПНО"}</small>
     </Panel>
-    {mapOpen && !menuOpen && <MapPanel aria-label="Карта экспедиции">
-      <small>ПОЛЕВОЙ АТЛАС / 01</small><h2>Долина маяков</h2>
-      <svg viewBox="-115 -115 230 230" role="img" aria-label="Схема маяков и осколков. Север сверху." style={{ width: "100%", background: "rgb(52 97 94 / calc(var(--hud-opacity, .55) * .45))", borderRadius: 100, border: "1px solid #c8e7db30" }}>
-        <circle r="96" fill="none" stroke="#c8e7db20" /><circle r="55" fill="none" stroke="#c8e7db15" />
-        {[-100, -50, 0, 50, 100].map((n) => <g key={n} stroke="#ffffff10"><path d={`M ${n} -110 V 110 M -110 ${n} H 110`} /></g>)}
-        <text x="0" y="-102" fill="#ccdbd2" fontSize="8" textAnchor="middle">СЕВЕР</text>
-        {BEACONS.map((b) => <line key={b.id} x1={CAMP.x} y1={CAMP.z} x2={b.x} y2={b.z} stroke={save.restored.includes(b.id) ? b.color : "#ffffff28"} strokeDasharray="3 4" />)}
-        {CRYSTALS.filter((c) => !save.collected.includes(c.id)).map((c) => <circle key={c.id} cx={c.x} cy={c.z} r="1.5" fill="#8de2bd" />)}
-        <rect x={CAMP.x - 3} y={CAMP.z - 3} width="6" height="6" fill="#ffce84" />
-        {BEACONS.map((b, i) => <g key={b.id}><circle cx={b.x} cy={b.z} r={targetId === b.id ? 7 : 5} fill={save.restored.includes(b.id) ? b.color : "#28484d"} stroke={b.color} /><text x={b.x} y={b.z + 2.5} textAnchor="middle" fill="#fff" fontSize="7">{i + 1}</text></g>)}
-        <circle ref={marker} r="3" fill="#fff" stroke="#132b31" strokeWidth="1.5" />
+    {!menuOpen && <MiniMap aria-label="Мини-карта экспедиции">
+      <svg viewBox="-58 -58 116 116" role="img" aria-label="Маяки, осколки и положение игрока. Верх совпадает с направлением камеры.">
+        <defs><clipPath id="mini-map-circle"><circle r="57" /></clipPath></defs>
+        <g clipPath="url(#mini-map-circle)">
+          <g ref={mapContent}>
+            {[-160, -120, -80, -40, 0, 40, 80, 120, 160].map((n) => <g key={n} stroke="#ffffff12"><path d={`M ${n} -160 V 160 M -160 ${n} H 160`} /></g>)}
+            {CRYSTALS.filter((c) => !save.collected.includes(c.id)).map((c) => <circle key={c.id} cx={c.x} cy={c.z} r="1.7" fill="#8de2bd" />)}
+            <rect x={CAMP.x - 2.5} y={CAMP.z - 2.5} width="5" height="5" fill="#ffce84" />
+            {BEACONS.map((b) => <circle key={b.id} cx={b.x} cy={b.z} r={target.id === b.id ? 5 : 3.8} fill={save.restored.includes(b.id) ? b.color : "#28484d"} stroke={b.color} strokeWidth={target.id === b.id ? 1.8 : 1} />)}
+          </g>
+          <circle r="3.8" fill="#fff" stroke="#132b31" strokeWidth="1.8" />
+          <path d="M 0 -55 L -3.5 -48 L 3.5 -48 Z" fill="#ffce84" />
+        </g>
       </svg>
-      <p>● Вы &nbsp; ◆ Лагерь &nbsp; · Энергия</p>
-      <nav aria-label="Выбрать цель">{BEACONS.map((b, index) => <button key={b.id} aria-pressed={targetId === b.id} onClick={() => { setTargetId(b.id); setMapOpen(false); }}><span>{String(index + 1).padStart(2, "0")} &nbsp; {b.name}</span><em>{save.restored.includes(b.id) ? "Зажжён" : save.discovered.includes(b.id) ? "Открыт" : "Сигнал"}</em></button>)}</nav>
-    </MapPanel>}
+    </MiniMap>}
     {!menuOpen && <Footer><div ref={prompt} /></Footer>}
     {menuOpen && <PauseLayer><PauseCard ref={menuRef} role="dialog" aria-modal="true" aria-labelledby="pause-title">
       <small>ХРАНИТЕЛИ МАЯКОВ</small><h2 id="pause-title">Пауза</h2>
       <label htmlFor="hud-transparency">Прозрачность панелей <output>{transparency}%</output></label>
       <input id="hud-transparency" type="range" min="0" max="85" step="5" value={transparency} onChange={(event) => setTransparency(Number(event.target.value))} />
       <h3>УПРАВЛЕНИЕ</h3>
-      <dl><dt>WASD / стрелки</dt><dd>Движение и управление машиной</dd><dt>F</dt><dd>Восстановить маяк / завершить экспедицию</dd><dt>M</dt><dd>Открыть карту на ходу</dd><dt>R</dt><dd>Вернуться в лагерь</dd><dt>Escape</dt><dd>Пауза / продолжить</dd></dl>
+      <dl><dt>WASD / стрелки</dt><dd>Газ, тормоз и поворот</dd><dt>Пробел</dt><dd>Ручник и управляемый занос</dd><dt>F</dt><dd>Восстановить маяк / завершить экспедицию</dd><dt>R</dt><dd>Вернуться в лагерь</dd><dt>Escape</dt><dd>Пауза / продолжить</dd></dl>
       <button onClick={() => setMenuOpen(false)}>Продолжить путешествие</button>
     </PauseCard></PauseLayer>}
+    {!menuOpen && <Speed><span ref={speed}>00</span><small>КМ/Ч</small></Speed>}
   </Root>;
 };

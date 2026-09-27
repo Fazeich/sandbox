@@ -66,6 +66,7 @@ export const AutoloopBridge = ({ state }: { state: TownState }) => {
 
         state.player.x = player.x;
         state.player.z = player.z;
+        state.teleportRevision += 1;
 
         if (typeof player.facing === "number") {
           state.player.facing = player.facing;

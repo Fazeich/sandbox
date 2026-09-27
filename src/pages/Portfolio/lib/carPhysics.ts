@@ -13,7 +13,20 @@ export interface CarInput {
   throttle: number;
   brake: number;
   steer: number;
+  handbrake?: number;
 }
+
+export interface CarTuning {
+  engineMultiplier: number;
+  maxSpeedMultiplier: number;
+  gripMultiplier: number;
+}
+
+export const STOCK_CAR_TUNING: CarTuning = {
+  engineMultiplier: 1,
+  maxSpeedMultiplier: 1,
+  gripMultiplier: 1,
+};
 
 export interface CarBody {
   x: number;
@@ -119,6 +132,7 @@ const stepCarSubstep = (
   input: CarInput,
   terrain: CarTerrain,
   dt: number,
+  tuning: CarTuning,
 ): void => {
   const normal: CarNormal = { x: 0, y: 1, z: 0 };
 
@@ -145,7 +159,7 @@ const stepCarSubstep = (
 
   if (!body.airborne) {
     if (input.throttle > 0) {
-      drive += ENGINE_ACCEL * input.throttle;
+      drive += ENGINE_ACCEL * tuning.engineMultiplier * input.throttle;
     }
 
     if (input.brake > 0) {
@@ -158,6 +172,9 @@ const stepCarSubstep = (
     const maxTraction = TRACTION * GRAVITY * load;
 
     drive = clamp(drive, -maxTraction, maxTraction);
+    if (input.handbrake && Math.abs(body.speed) > 0.5) {
+      drive -= Math.sign(body.speed) * 12 * input.handbrake;
+    }
   }
 
   const rolling = ROLLING_RESISTANCE * GRAVITY * load;
@@ -191,7 +208,7 @@ const stepCarSubstep = (
   if (body.airborne) {
     body.lateral *= dragFactor;
   } else {
-    body.speed = clamp(body.speed, -MAX_REVERSE, MAX_SPEED);
+    body.speed = clamp(body.speed, -MAX_REVERSE, MAX_SPEED * tuning.maxSpeedMultiplier);
   }
 
   // Steering — yaw carries angular momentum, so the car leans into turns and
@@ -225,7 +242,10 @@ const stepCarSubstep = (
   // Lateral slip — cross-slope gravity versus tire grip.
   body.lateral += (body.airborne ? 0 : GRAVITY * gradeLateral) * dt;
 
-  const grip = body.airborne ? 0 : GRIP * load;
+  if (!body.airborne && input.handbrake) {
+    body.lateral -= body.yawRate * body.speed * 0.42 * input.handbrake * dt;
+  }
+  const grip = body.airborne ? 0 : GRIP * tuning.gripMultiplier * load * (1 - (input.handbrake ?? 0) * 0.72);
 
   if (Math.abs(body.lateral) <= grip * dt) {
     body.lateral = 0;
@@ -300,11 +320,12 @@ export const stepCar = (
   input: CarInput,
   terrain: CarTerrain,
   dt: number,
+  tuning: CarTuning = STOCK_CAR_TUNING,
 ): void => {
   if (!Number.isFinite(dt) || dt <= 0) return;
   const duration = Math.min(dt, 0.1);
   const steps = Math.ceil(duration / MAX_STEP);
   for (let i = 0; i < steps; i += 1) {
-    stepCarSubstep(body, input, terrain, duration / steps);
+    stepCarSubstep(body, input, terrain, duration / steps, tuning);
   }
 };

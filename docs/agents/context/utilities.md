@@ -1,12 +1,30 @@
 # Utility Context
 
+- **Current primitive survival rules** (`src/lib/survival/world.ts`, `src/lib/survival/rules.ts`): Infinite random-seed world with continuous terrain height, smoothly weighted desert/forest/snow surface maps, forest soil blending, and physical two-hand progression. Chunk streaming supports near/medium/far render presets with medium as the default and a bounded 81-chunk cache. Eight deterministic tree types include the four new Blender variants; spawn weights are inverse square of modeled size, and shared trunk radii drive collision. Wildlife changes persist heading derived from each move. Only apple oak bears fruit. Current design is in `docs/agents/context/survival.md`.
+- **GLB outdoor fill** (`src/lib/assetLighting.ts`): Caches cloned standard materials for deer, trees, apples and rocks, adding a texture-tinted emissive fill to compensate for stronger Blender studio lighting without changing shared GLB data.
+
+- **Sandbox smooth terrain and materials** (`src/pages/Sandbox/lib/terrain.ts`, `src/pages/Sandbox/lib/materials.ts`, `src/pages/Sandbox/lib/art/textures/surfaces/`): Builds smooth-shaded 1m triangle grids without vertical block faces, samples exact rendered height for player and prop placement, and uses one lit shader material to blend bright grass/earth, sand and snow maps. `propMaterialTexture()` supplies the separate stone, wood and skin textures for held and worn items in `src/pages/Sandbox/lib/art/textures/`.
+- **Blender asset refresh** (`scripts/art/build_stylized_assets.py`, `scripts/art/build_deer.py`, `src/pages/Sandbox/lib/art/models/portfolio_forest_source.blend`, `src/pages/Sandbox/lib/art/models/`): Starts from `Portfolio-models-before-stylized.blend`, validates and preserves its original birch/oak meshes, removes the spruce, replaces only the oak foliage image, and assigns four ground maps to preview planes. Uses the adult deer builder for future asset refreshes, exports GLBs and saves a reviewable Blender source via `--save-as`.
+- **Deer refresh** (`scripts/art/build_deer.py`, `src/pages/Sandbox/lib/art/models/deer.glb`, `src/pages/Sandbox/lib/art/models/portfolio_models_deer.blend`, `src/pages/Sandbox/lib/art/textures/deer_coat.png`): Replaces only deer objects in `Portfolio-models.blend`, builds an adult deer with four named leg pivots and head pivot, exports a textured GLB and saves a Blender copy plus optional isolated preview.
+
+- **Survival shared rules and rooms** (`src/lib/survival/rules.ts`, `configs/coopServer.ts`, `configs/vite.config.ts`): Validated individual actions with shared-world changes and same-origin SSE rooms for up to four people. See `docs/agents/context/survival.md`. Vite development and preview mount the room API; static deployments remain solo-capable.
+
+- **Dawn end-to-end test** (`tests/e2e/dawn-beacon.e2e.ts`, `configs/playwright.config.ts`): System Chrome drives the built game through three Dawn crystal pickups using the test-only autoloop API, activates the beacon and asserts the persistent drive reward in the HUD. Run with `npm run test:e2e`; Playwright builds and serves the production bundle on port 4173. `src/pages/Portfolio/lib/AutoloopBridge.tsx` increments the teleport revision so scripted moves reset vehicle physics exactly.
+- **Vitest isolation** (`vitest.config.ts`): Browser journeys under `tests/e2e` are excluded from the Node unit suite.
+
+- **Beacon reward progression** (`src/lib/expedition.ts`): All beacons consume three crystal energy; Dawn grants the `dawn-drive` upgrade on restoration. Defensive parsing converts a legacy gate-restored Dawn into equivalent crystal energy so the completed beacon and reward survive migration.
+- **Expedition persistence v3** (`src/stores/expedition/expedition.ts`): Saves crystal, beacon and upgrade state per terrain seed, with fallback migration from v2 and v1 saves.
+- **Car tuning and handbrake** (`src/pages/Portfolio/lib/carPhysics.ts`, `src/pages/Portfolio/lib/controls.ts`): Optional tuning multipliers preserve stock defaults while upgrades alter engine, maximum speed and grip. Space applies braking with reduced lateral grip and yaw-driven slip for controlled drifts.
+- **Car physics reward tests** (`src/pages/Portfolio/lib/carPhysics.test.ts`): Confirms stock limits remain unchanged, tuned drive achieves its higher speed ceiling, and handbrake trades speed/grip for measurable slip. Expedition tests cover energy gating, reward grant, persistence and legacy migration. World tests keep landmark and pickup areas clear across seeds.
+
 
 - **Settings input isolation** (`src/pages/Portfolio/lib/controls.ts`): Editable elements and range inputs retain their keyboard controls instead of steering the car.
 
 
 - **Mission access regression** (`src/pages/Portfolio/lib/world/world.test.ts`): Validates solid-prop/crate clearance around all mission pickups across five seeds and neighboring chunks. `src/pages/Portfolio/lib/world/ramps.ts` excludes ramps near beacon areas; `src/pages/Portfolio/lib/world/pedestals.ts` excludes wild portals inside mission clearings.
 
-- **Shared camp and input reset** (`src/lib/expedition.ts`, `src/pages/Portfolio/lib/controls.ts`): CAMP coordinates keep map, world and completion proximity aligned; exported resetControls prevents held keys leaking through atlas pause.
+- **Shared camp and input reset** (`src/lib/expedition.ts`, `src/pages/Portfolio/lib/controls.ts`): CAMP coordinates keep the mini-map, world and completion proximity aligned; exported resetControls prevents held keys leaking through the Escape pause.
+- **Camera heading bridge** (`src/pages/Portfolio/lib/CameraRig.tsx`, `src/pages/Portfolio/lib/state.ts`): The camera rig publishes its smoothed horizontal facing angle into mutable town state so the DOM mini-map can rotate in sync without React frame updates.
 
 - **Expedition regression tests** (`src/lib/expedition.test.ts`): Full campaign in reverse order, resource sufficiency, duplicate prevention, completion gating and corrupted-save recovery.
 
@@ -73,7 +91,7 @@
 
 ## Tests
 
-- **Vitest** (`vitest.config.ts`): Unit tests for pure game logic run with `npm test` (`vitest run`).
+- **Vitest** (`vitest.config.ts`): Unit tests for pure game logic under `src/**/*.test.ts` run with `npm test` (`vitest run`); browser E2E and tool dependency tests are excluded.
   - `src/lib/utils.test.ts` — vector/angle helpers.
   - `src/lib/physics.test.ts` — `stepWorld`, `segmentRadius`, `isGameOver`, wall damage, boost ram / shell break tracking, boost cooldown and 0% hard stop.
   - `src/stores/snake3d/snake3d.test.ts` — store reducers and best-score persistence (localStorage stub).
@@ -107,3 +125,5 @@ Related: `.opencode/agent/autoloop.md` (restricted implementer agent), `docs/age
 - **Handling/impact/ramp tests** (`src/pages/Portfolio/lib/carPhysics.test.ts`, `src/pages/Portfolio/lib/cratePhysics.test.ts`, `src/pages/Portfolio/lib/world/ramps.test.ts`): Countersteering/release response, approach-only crate impulse, airborne clearance, momentum transfer, support removal, settling, seeded ramp sizes and actual car takeoff/landing on all three profiles.
 
 - **World constants** (`src/pages/Portfolio/lib/constants.ts`): Removed unused on-foot movement and animation tuning; car physics tuning remains in carPhysics.ts.
+
+- **Blender source refinement** (`scripts/art/refine_portfolio_models.py`): Explicit MCP stages refine the existing deer, build a 20-bone rig and two looped walk actions, and derive four distinct branching tree variants using original polygon foliage/UVs. `validate_scene()` evaluates action continuity and hoof clearance at whole/half frames. Operates on the backed-up `Z:/programs/Blender/Models/Portfolio-models.blend`; runtime GLBs are not exported. Review renders and validation results are in `scripts/art/previews/`; asset details are in `docs/agents/context/sandbox-art.md`.

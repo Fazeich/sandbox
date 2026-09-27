@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useUnit } from "effector-react";
-import { BEACONS, CRYSTALS, BEACON_COST, CAMP, energyLeft } from "@/lib/expedition";
+import { BEACONS, CRYSTALS, BEACON_COST, CAMP, DAWN_BEACON_ID, canRestoreBeacon, energyLeft } from "@/lib/expedition";
 import { $expedition, expeditionAction, expeditionNotice } from "@/stores/expedition/expedition";
 import { isAutoloopFrozen } from "@/lib/autoloop";
 import { TownState } from "./state";
@@ -37,15 +37,19 @@ export const ExpeditionWorld = ({ state }: { state: TownState }) => {
     for (const beacon of BEACONS) {
       if (near(beacon, 16) && !$expedition.getState().discovered.includes(beacon.id)) {
         expeditionAction({ type: "discover", id: beacon.id });
-        expeditionNotice(`Открыт маяк «${beacon.name}». Соберите осколки вокруг него.`);
+        expeditionNotice(`Открыт маяк «${beacon.name}» — ${beacon.landmark}. Соберите осколки вокруг него.`);
       }
       if (action.current && onGround && near(beacon, 4)) {
-        const current = $expedition.getState();
-        if (current.restored.includes(beacon.id)) expeditionNotice("Этот маяк уже освещает долину.");
-        else if (energyLeft(current) < BEACON_COST) expeditionNotice(`Нужно ещё ${BEACON_COST - energyLeft(current)} осколка. Ищите парящие кристаллы рядом.`);
+        const progress = $expedition.getState();
+        if (progress.restored.includes(beacon.id)) expeditionNotice("Этот маяк уже освещает долину.");
+        else if (!canRestoreBeacon(progress, beacon.id)) expeditionNotice(`Нужно ещё ${Math.max(0, BEACON_COST - energyLeft(progress))} осколка. Ищите парящие кристаллы рядом.`);
         else {
           expeditionAction({ type: "restore", id: beacon.id });
-          expeditionNotice($expedition.getState().restored.length === BEACONS.length ? "Все маяки зажжены! Вернитесь в лагерь и нажмите F у центрального огня." : `Маяк «${beacon.name}» восстановлен. Выберите следующую цель на карте.`);
+          expeditionNotice($expedition.getState().restored.length === BEACONS.length
+            ? "Все маяки зажжены! Вернитесь в лагерь и нажмите F у центрального огня."
+            : beacon.id === DAWN_BEACON_ID
+              ? "Рассвет восстановлен. Награда: форсированный привод — больше тяги и максимальной скорости."
+              : `Маяк «${beacon.name}» восстановлен. Выберите следующую цель на карте.`);
         }
       }
     }
@@ -57,7 +61,6 @@ export const ExpeditionWorld = ({ state }: { state: TownState }) => {
   });
   return <group>
     <group position={[CAMP.x, groundHeight(CAMP.x, CAMP.z), CAMP.z]}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]}><ringGeometry args={[2.2, 2.6, 32]} /><meshStandardMaterial color="#fff1ca" /></mesh>
       <mesh position={[0, 0.35, 0]}><cylinderGeometry args={[0.65, 0.9, 0.7, 6]} /><meshStandardMaterial color="#555b70" /></mesh>
       <mesh position={[0, 1.25, 0]}><octahedronGeometry args={[0.6]} /><meshStandardMaterial color="#ffc76b" emissive="#ffc76b" emissiveIntensity={save.completed ? 3 : 0.5} /></mesh>
     </group>
@@ -67,7 +70,6 @@ export const ExpeditionWorld = ({ state }: { state: TownState }) => {
         <mesh position={[0, 0.25, 0]} receiveShadow><cylinderGeometry args={[1.8, 2.2, 0.5, 6]} /><meshStandardMaterial color="#66717a" /></mesh>
         <mesh position={[0, 1.6, 0]} castShadow><boxGeometry args={[0.8, 2.5, 0.8]} /><meshStandardMaterial color="#ede3c9" /></mesh>
         <mesh position={[0, 3.4, 0]}><octahedronGeometry args={[0.85]} /><meshStandardMaterial color={lit ? beacon.color : "#697987"} emissive={beacon.color} emissiveIntensity={lit ? 2.5 : 0.15} /></mesh>
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.1, 0]}><ringGeometry args={[2.6, 2.8, 32]} /><meshBasicMaterial color={beacon.color} /></mesh>
         {lit && <mesh position={[0, 14, 0]}><cylinderGeometry args={[0.12, 0.45, 22, 8]} /><meshBasicMaterial color={beacon.color} transparent opacity={0.28} depthWrite={false} /></mesh>}
       </group>;
     })}

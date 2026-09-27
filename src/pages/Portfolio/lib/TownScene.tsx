@@ -16,6 +16,7 @@ import { Pedestals } from "./Pedestals";
 import { Ramps } from "./Ramps";
 import { WorldStreamer } from "./WorldStreamer";
 import { ExpeditionWorld } from "./ExpeditionWorld";
+import { BeaconLandmarks } from "./BeaconLandmarks";
 
 export const TownScene = ({
   state,
@@ -52,6 +53,7 @@ export const TownScene = ({
     <Props />
     <Ramps />
     <Pedestals state={state} />
+    <BeaconLandmarks />
     <ExpeditionWorld state={state} />
     <Crates
       state={state}

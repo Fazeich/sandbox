@@ -28,3 +28,5 @@ package-lock.json
 
 .aider*
 .autoloop/
+test-results/
+playwright-report/

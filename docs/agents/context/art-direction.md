@@ -1,18 +1,34 @@
-# Art Direction — Voxel Open World
+# Art Direction — Bright Smooth Survival World
 
 Target for the map loop: **every map element scores >= 8/10** on the rubric below,
 verified by a vision-model judge on fixed-seed screenshots.
 
 ## Style
 
-- Voxel / low-poly diorama, bright and readable, consistent with the procedural
-  car (`src/pages/Portfolio/lib/CarModel.tsx`).
-- No external assets: no GLTF, no texture files. All geometry and materials are
-  generated procedurally in code.
+- Bright, saturated cartoon art with rounded low-poly props and smooth continuous
+  terrain. Use the light palette established by `src/pages/Sandbox/lib/art/textures/`
+  and `src/pages/Sandbox/lib/art/models/` consistently across the survival world.
+
+## First-person Sandbox style
+
+- `src/pages/Sandbox/` uses smooth-shaded continuous terrain in three biomes:
+  desert, forest and snow. Its four repeatable ground maps are earth, snow, sand
+  and grass in `src/pages/Sandbox/lib/art/textures/surfaces/`.
+- `src/pages/Sandbox/lib/art/textures/trees/` contains bright tileable bark and
+  foliage maps. `src/pages/Sandbox/lib/art/models/forest_trees.glb` contains a
+  birch and three increasingly broad/tall oak silhouettes; the apple oak is rare.
+- `src/pages/Sandbox/lib/art/models/apple.glb` and
+  `src/pages/Sandbox/lib/art/textures/apple_skin.png` provide the low-poly fruit
+  attached to the largest oak and carried after harvest. `deer.glb` uses the
+  matching spotted coat from `src/pages/Sandbox/lib/art/textures/deer_coat.png`.
+- `src/pages/Sandbox/lib/art/models/rock.glb` and
+  `src/pages/Sandbox/lib/art/textures/rock_surface.png` define the matching
+  low-poly boulder. Biome material weights blend across boundaries in
+  `src/pages/Sandbox/lib/terrain.ts` and `src/lib/survival/world.ts`.
 
 ## Allowed concept changes (Phase 1)
 
-- Infinite procedural voxel terrain with chunk streaming and explicit biomes.
+- Infinite procedural smooth terrain with chunk streaming and desert/forest/snow biomes.
 - Removal of the perimeter fence (`lib/Walls.tsx`) in favor of an open world.
 - Random pedestals (existing mini-games `Snake 3D`, `Letter Rain`) placed by a
   seeded RNG.

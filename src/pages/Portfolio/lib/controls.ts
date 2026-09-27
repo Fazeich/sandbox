@@ -1,6 +1,7 @@
 export interface ControlState {
   moveDir: { x: number; z: number };
   interact: boolean;
+  handbrake: boolean;
 }
 
 const held = new Set<string>();
@@ -16,6 +17,7 @@ const movementCodes = new Set([
   "ArrowDown",
   "ArrowLeft",
   "ArrowRight",
+  "Space",
 ]);
 
 const keyHandler = (down: boolean) => (e: KeyboardEvent) => {
@@ -82,5 +84,6 @@ export const pollControls = (): ControlState => {
   return {
     moveDir: len > 0 ? { x: mx / len, z: mz / len } : { x: 0, z: 0 },
     interact,
+    handbrake: held.has("Space"),
   };
 };

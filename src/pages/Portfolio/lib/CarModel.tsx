@@ -1,7 +1,10 @@
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
+import { useUnit } from "effector-react";
 import * as THREE from "three";
 import { isAutoloopFrozen } from "@/lib/autoloop";
+import { DAWN_DRIVE_UPGRADE, hasUpgrade } from "@/lib/expedition";
+import { $expedition } from "@/stores/expedition/expedition";
 import { PLAYER_SPAWN } from "./constants";
 import { TownState } from "./state";
 import { pollControls } from "./controls";
@@ -136,6 +139,8 @@ export const CarModel = ({
   const flipRef = useRef<CarFlip>({ active: false, angle: 0, timer: 0 });
   const teleportRevision = useRef(state.teleportRevision);
   const navigateRef = useRef(onNavigate);
+  const expedition = useUnit($expedition);
+  const tuned = hasUpgrade(expedition, DAWN_DRIVE_UPGRADE);
   navigateRef.current = onNavigate;
 
   useFrame((_, delta) => {
@@ -189,15 +194,20 @@ export const CarModel = ({
           throttle: ctrl.moveDir.z < 0 ? 1 : 0,
           brake: ctrl.moveDir.z > 0 ? 1 : 0,
           steer: -ctrl.moveDir.x,
+          handbrake: ctrl.handbrake ? 1 : 0,
         },
         terrain,
         dt,
+        tuned
+          ? { engineMultiplier: 1.18, maxSpeedMultiplier: 1.15, gripMultiplier: 1.08 }
+          : undefined,
       );
     }
 
     player.x = body.x;
     player.z = body.z;
     player.facing = body.heading;
+    player.speed = body.speed;
 
     const hit = resolveObstacles(player, CAR_RADIUS);
     const beforeX = player.x;
@@ -234,6 +244,7 @@ export const CarModel = ({
 
       player.x = body.x;
       player.z = body.z;
+      player.speed = 0;
       body.x = player.x;
       body.z = player.z;
     }
@@ -329,6 +340,10 @@ export const CarModel = ({
         <mesh material={bodyDarkMaterial} position={[0, 0.32, -0.7]} castShadow>
           <boxGeometry args={[1.2, 0.12, 0.06]} />
         </mesh>
+        {tuned && <>
+          <mesh material={lightMaterial} position={[0, 0.59, 0.55]}><boxGeometry args={[0.72, 0.035, 0.08]} /></mesh>
+          <mesh material={lightMaterial} position={[0, 0.58, -0.68]}><boxGeometry args={[1.05, 0.06, 0.12]} /></mesh>
+        </>}
       </group>
     </group>
   );

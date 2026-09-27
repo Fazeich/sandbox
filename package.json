@@ -6,10 +6,12 @@
   "type": "module",
   "scripts": {
     "start": "vite --config configs/vite.config.ts",
+    "coop": "vite --config configs/vite.config.ts --host 0.0.0.0",
     "build": "vite build --config configs/vite.config.ts",
     "lint": "eslint src --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "playwright test --config configs/playwright.config.ts",
     "preview": "vite preview",
     "predeploy": "npm run build && copy dist\\index.html dist\\404.html",
     "deploy": "gh-pages -d dist"

@@ -1,0 +1,22 @@
+{
+  "Deer_Walk_Relaxed": {
+    "loop_error": 0.0,
+    "minimum_hoof_z": 0.002908,
+    "maximum_hoof_lift_z": 0.122888,
+    "frames": [
+      1,
+      49
+    ]
+  },
+  "Deer_Walk_Brisk": {
+    "loop_error": 0.0,
+    "minimum_hoof_z": 0.002741,
+    "maximum_hoof_lift_z": 0.170274,
+    "frames": [
+      1,
+      33
+    ]
+  },
+  "trees": 4,
+  "rig_bones": 20
+}

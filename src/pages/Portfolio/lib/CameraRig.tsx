@@ -52,8 +52,15 @@ export const CameraRig = ({ state }: { state: TownState }) => {
     // Smooth the orbit angle rather than cutting through the player on a U-turn.
     const tracking = follow.current;
     const playerY = Math.max(groundY, p.y);
-    desired.set(p.x, playerY + CAMERA_HEIGHT + (inRange ? CAMERA_ALTAR_FOCUS_RAISE : 0), p.z);
-    lookDesired.set(p.x, playerY + 1, p.z);
+    const speedRatio = Math.min(1, Math.abs(p.speed) / 20);
+    const cameraDistance = CAMERA_BACK + speedRatio * 3.2;
+    const lookAhead = 1.4 + speedRatio * 4.2;
+    desired.set(p.x, playerY + CAMERA_HEIGHT + speedRatio * 1.4 + (inRange ? CAMERA_ALTAR_FOCUS_RAISE : 0), p.z);
+    lookDesired.set(
+      p.x + Math.sin(p.facing) * lookAhead,
+      playerY + 1,
+      p.z + Math.cos(p.facing) * lookAhead,
+    );
     if (!tracking.initialized) {
       tracking.position.copy(desired);
       tracking.look.copy(lookDesired);
@@ -66,17 +73,18 @@ export const CameraRig = ({ state }: { state: TownState }) => {
       tracking.position.lerp(desired, blend);
       tracking.look.lerp(lookDesired, 1 - Math.exp(-CAMERA_LOOK_BLEND * dt));
     }
+    state.cameraFacing = tracking.facing;
     camera.position.set(
-      tracking.position.x - Math.sin(tracking.facing) * CAMERA_BACK,
+      tracking.position.x - Math.sin(tracking.facing) * cameraDistance,
       tracking.position.y,
-      tracking.position.z - Math.cos(tracking.facing) * CAMERA_BACK,
+      tracking.position.z - Math.cos(tracking.facing) * cameraDistance,
     );
     camera.lookAt(tracking.look);
     const targetFov = state.interacting
       ? CAMERA_FOV - 4
       : inRange
         ? CAMERA_FOV_NEAR_ALTAR
-        : CAMERA_FOV;
+        : CAMERA_FOV + speedRatio * 6;
 
     const cam = camera as THREE.PerspectiveCamera;
 

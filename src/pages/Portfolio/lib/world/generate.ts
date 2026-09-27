@@ -67,7 +67,7 @@ export const generateChunk = (
         clear &&= props.every((prop) => Math.hypot(prop.x - x, prop.z - z) >
           (kind === "tree" || prop.kind === "tree" ? 2.6 : 1.6));
         // Keep the starting crate pile accessible.
-        clear &&= Math.hypot(x - 1.1, z + 5.5) > 3;
+        clear &&= Math.hypot(x + 4.5, z + 6.5) > 3;
       }
 
       for (const pedestal of pedestals) {
@@ -128,8 +128,8 @@ export const generateChunk = (
   const startPile = cx === 0 && cz === -1;
   if (startPile || crateRng() < 0.48) {
     for (let attempt = 0; attempt < 8; attempt += 1) {
-      const x = startPile ? 0.6 : originX + 3 + crateRng() * (CHUNK_SIZE - 6);
-      const z = startPile ? -6 : originZ + 3 + crateRng() * (CHUNK_SIZE - 6);
+      const x = startPile ? -5 : originX + 3 + crateRng() * (CHUNK_SIZE - 6);
+      const z = startPile ? -7 : originZ + 3 + crateRng() * (CHUNK_SIZE - 6);
       const height = terrain.heightAt(x, z);
       const clear = !nearbyRamps.some((ramp) => inRampLane(ramp, x, z)) && pedestals.every((p) => Math.hypot(p.position.x - x, p.position.z - z) > 5) &&
         props.every((p) => p.kind !== "tree" && p.kind !== "rock" || Math.hypot(p.x - x, p.z - z) > 2.8) &&

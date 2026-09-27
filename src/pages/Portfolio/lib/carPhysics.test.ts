@@ -168,6 +168,38 @@ describe("turning inertia", () => {
   });
 });
 
+describe("car upgrades", () => {
+  it("applies engine, speed and grip tuning without changing stock defaults", () => {
+    const terrain = makeTerrain(0);
+    const stock = createCarBody(0, 0, 0, 0);
+    const tuned = createCarBody(0, 0, 0, 0);
+    for (let i = 0; i < 600; i += 1) {
+      stepCar(stock, { throttle: 1, brake: 0, steer: 0 }, terrain, STEP);
+      stepCar(tuned, { throttle: 1, brake: 0, steer: 0 }, terrain, STEP, {
+        engineMultiplier: 1.18,
+        maxSpeedMultiplier: 1.15,
+        gripMultiplier: 1.08,
+      });
+    }
+    expect(stock.speed).toBeLessThanOrEqual(18);
+    expect(tuned.speed).toBeGreaterThan(stock.speed + 1);
+    expect(tuned.speed).toBeLessThanOrEqual(18 * 1.15);
+  });
+  it("lets the handbrake trade speed and grip for a controlled slide", () => {
+    const terrain = makeTerrain(0);
+    const normalTurn = createCarBody(0, 0, 0, 0);
+    const drift = createCarBody(0, 0, 0, 0);
+    normalTurn.speed = drift.speed = 14;
+    for (let i = 0; i < 30; i += 1) {
+      stepCar(normalTurn, { throttle: 1, brake: 0, steer: 1 }, terrain, STEP);
+      stepCar(drift, { throttle: 1, brake: 0, steer: 1, handbrake: 1 }, terrain, STEP);
+    }
+    expect(drift.speed).toBeLessThan(normalTurn.speed);
+    expect(drift.slip).toBeGreaterThan(normalTurn.slip);
+    expect(drift.slip).toBeGreaterThan(0.2);
+  });
+});
+
 describe("slope grades", () => {
   it("distinguishes uphill, flat and downhill", () => {
     const uphill = { x: -0.34, y: 0.94, z: 0 };

@@ -1,9 +1,11 @@
 import { createEvent, createStore } from "effector";
 import { advanceExpedition, ExpeditionAction, freshExpedition, parseExpedition } from "@/lib/expedition";
 import { readAutoloopSeed, isAutoloopEnabled } from "@/lib/autoloop";
-const saveKey = `portfolio:expedition:v1:${readAutoloopSeed() || 1337}`;
+const seed = readAutoloopSeed() || 1337;
+const saveKey = `portfolio:expedition:v3:${seed}`;
+const legacySaveKeys = [`portfolio:expedition:v2:${seed}`, `portfolio:expedition:v1:${seed}`];
 const readSave = () => {
-  try { return isAutoloopEnabled() ? freshExpedition() : parseExpedition(localStorage.getItem(saveKey)); }
+  try { return isAutoloopEnabled() ? freshExpedition() : parseExpedition(localStorage.getItem(saveKey) ?? legacySaveKeys.map((key) => localStorage.getItem(key)).find(Boolean) ?? null); }
   catch { return freshExpedition(); }
 };
 export const expeditionAction = createEvent<ExpeditionAction>();

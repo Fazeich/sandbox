@@ -13,11 +13,13 @@ export interface TooltipState {
 export interface TownState {
   paused: boolean;
   teleportRevision: number;
+  cameraFacing: number;
   player: {
     y: number;
     x: number;
     z: number;
     facing: number;
+    speed: number;
   };
   interacting: boolean;
   interactionTimer: number;
@@ -38,11 +40,13 @@ export const NO_TOOLTIP: TooltipState = {
 export const createTownState = (): TownState => ({
   paused: false,
   teleportRevision: 0,
+  cameraFacing: Math.PI,
   player: {
     y: 0,
     x: PLAYER_SPAWN.x,
     z: PLAYER_SPAWN.z,
     facing: Math.PI,
+    speed: 0,
   },
   interacting: false,
   interactionTimer: 0,
