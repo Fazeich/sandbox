@@ -1,10 +1,12 @@
-# Исток — первобытная песочница от первого лица
+# Sandbox — Исток
 
-Бесконечный процедурный мир, две пустые руки и развитие через действия с материалами. Без заданий, подсказок, дерева рецептов и конечной цели. Новая жизнь создаёт новый случайный мир; продолжение сохраняет его географию, изменения, вещи и состояние персонажа. Предыдущая автомобильная экспедиция доступна по `/expedition`; Snake и Letter Rain сохранены.
+Первобытная песочница от первого лица. Играть: https://fazeich.github.io/sandbox/
+
+Бесконечный процедурный мир, две пустые руки и развитие через действия с материалами. Без заданий, подсказок, дерева рецептов и конечной цели. Новая жизнь создаёт новый случайный мир; продолжение сохраняет его географию, изменения, вещи и состояние персонажа.
 
 ```bash
 npm install
-npm run start  # solo and room server, http://localhost:3000/portfolio/
+npm run start  # solo and room server, http://localhost:3000/sandbox/
 npm run coop   # same game/server exposed to your local network
 ```
 
@@ -22,41 +24,13 @@ npm run coop   # same game/server exposed to your local network
 
 Validation: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run test:e2e`.
 
-## Legacy portfolio experiments
+## История
 
-A personal portfolio built as a set of **3D mini-games** with react-three-fiber. The games are the portfolio — they demonstrate skills through gameplay and code quality, without an explicit "skills" section.
+Sandbox 1.1.0 выделен из проекта [portfolio](https://github.com/Fazeich/portfolio). Автомобильная экспедиция стала отдельным проектом [Valley Riding](https://github.com/Fazeich/valley-riding), а Snake 3D и Letter Rain остались в portfolio.
 
-## Pages
+## Деплой
 
-- **Legacy expedition** (`/expedition`) — explore a voxel valley by car, restore five beacons, or approach an arcade portal and press `E`.
-- **Snake 3D** (`/snake`) — free-movement snake in a volumetric arena: break protected food with a boost ram and collect flying shards.
-- **Letter Rain** (`/letters`) — type anywhere; characters fall as 3D blocks with simple stacking physics.
-
-## Controls
-
-| Page | Control |
-|---|---|
-| Legacy expedition | `WASD` / arrows to drive, `Space` handbrake, `F` restore beacon, `E` enter arcade, `Esc` pause |
-| Snake | Mouse (`LMB`) or `WASD` to steer, `Space` boost, `Esc` pause |
-| Letter Rain | Type to drop letters, `Esc` or `← Назад` to return |
-
-## Tech Stack
-
-- **React 18** + **Vite** + **TypeScript** (strict)
-- **Three.js** + **react-three-fiber**, **drei**, **@react-three/postprocessing** (Bloom, Vignette)
-- **Effector** — discrete game events
-- **styled-components** — DOM overlays and theming
-- **Vitest** — unit tests for physics and stores
-- **ESLint** (flat config) + `tsc`
-
-## Getting Started
-
-```bash
-npm install
-npm run start      # dev server → http://localhost:3000/portfolio/
-```
-
-Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run deploy` (GitHub Pages).
+При каждом push в `master` workflow `.github/workflows/deploy.yml` собирает проект и публикует его в ветку `gh-pages`. Вручную задеплоить можно командой `npm run deploy`.
 
 ## Links
 

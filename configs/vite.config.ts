@@ -6,7 +6,7 @@ import { coopPlugin } from "./coopServer";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), coopPlugin()],
-  base: "/portfolio/",
+  base: "/sandbox/",
 
   resolve: {
     alias: {

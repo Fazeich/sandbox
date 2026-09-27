@@ -1,8 +1,8 @@
 {
-  "name": "vite-portfolio",
-  "homepage": "https://fazeich.github.io/portfolio",
+  "name": "sandbox",
+  "homepage": "https://fazeich.github.io/sandbox",
   "private": true,
-  "version": "2.1.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "start": "vite --config configs/vite.config.ts",
@@ -13,7 +13,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test --config configs/playwright.config.ts",
     "preview": "vite preview",
-    "predeploy": "npm run build && copy dist\\index.html dist\\404.html",
+    "predeploy": "npm run build && node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\"",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {

@@ -29,14 +29,11 @@ verified by a vision-model judge on fixed-seed screenshots.
 ## Allowed concept changes (Phase 1)
 
 - Infinite procedural smooth terrain with chunk streaming and desert/forest/snow biomes.
-- Removal of the perimeter fence (`lib/Walls.tsx`) in favor of an open world.
-- Random pedestals (existing mini-games `Snake 3D`, `Letter Rain`) placed by a
-  seeded RNG.
 
 ## Element inventory
 
 `terrain-surface`, `terrain-detail`, `rocks-cliffs`, `trees-vegetation`,
-`biome-transitions`, `distant-horizon`, `pedestals`, `props`.
+`biome-transitions`, `distant-horizon`, `props`.
 
 ## Rubric (0-10 each, threshold 8)
 

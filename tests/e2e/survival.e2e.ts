@@ -83,13 +83,13 @@ test("two independent browsers join one live room and receive membership updates
   const hostContext = await browser.newContext(), guestContext = await browser.newContext();
   try {
     const host = await hostContext.newPage(), guest = await guestContext.newPage();
-    await host.goto("http://127.0.0.1:4173/portfolio/");
+    await host.goto("http://127.0.0.1:4173/sandbox/");
     await host.getByRole("button", { name: "Вместе", exact: true }).click();
     const joined = host.waitForResponse(response => response.url().endsWith("/api/coop/join") && response.request().method() === "POST");
     await host.getByRole("button", { name: "Создать мир", exact: true }).click();
     const data = await (await joined).json();
     await expect(host.locator(".origin-room")).toContainText("1/4");
-    await guest.goto(`http://127.0.0.1:4173/portfolio/?room=${data.room}`);
+    await guest.goto(`http://127.0.0.1:4173/sandbox/?room=${data.room}`);
     await guest.getByRole("button", { name: "Войти", exact: true }).click();
     await expect(guest.locator(".origin-room")).toContainText("2/4");
     await expect(host.locator(".origin-room")).toContainText("2/4");
